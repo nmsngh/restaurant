@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Manager Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <nav class="admin-sidebar">
+        <div class="admin-logo">
+            <h2>Manager Page</h2>
+        </div>
+        <ul class="admin-menu">
+            <li class="active"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('auth.logout') }}">logout</a></li>
+        </ul>
+    </nav>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <h1>Manage restaurant</h1>
+        </header>
+
+        <div class="restaurant-grid">
+            {% for restaurant in restaurants %}
+            <div class="restaurant-card">
+                <div class="restaurant-header">
+                    <h3>{{ restaurant.name }}</h3>
+                    <div class="realtime-data">
+                        <div class="sensor-value temperature">
+                            <i class="fas fa-thermometer-half"></i>
+                            <span id="temp-{{ restaurant.id }}">--</span>°C
+                        </div>
+                        <div class="sensor-value humidity">
+                            <i class="fas fa-tint"></i>
+                            <span id="humid-{{ restaurant.id }}">--</span>%
+                        </div>
+                        <div class="sensor-value noise">
+                            <i class="fas fa-volume-up"></i>
+                            <span id="noise-{{ restaurant.id }}">--</span>dB
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="tempChart-{{ restaurant.id }}"></canvas>
+                </div>
+                <div class="restaurant-actions">
+                    <a href="{{ url_for('admin.edit_restaurant', id=restaurant.id) }}" class="btn edit-btn">
+                        Edit information
+                    </a>
+                    <a href="{{ url_for('admin.restaurant_stats', id=restaurant.id) }}" class="btn stats-btn">
+                        Detail
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+<script>
+    const restaurants = {{ restaurants|map(attribute='id')|list|tojson }};
+</script>
+{% endblock %}

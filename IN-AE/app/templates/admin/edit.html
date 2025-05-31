@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ restaurant.name }} - edit information</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* 기존 스타일 유지 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(45deg, #ffffff, #f8f9fa);
+            padding: 2rem;
+        }
+
+        .edit-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-actions h1 {
+            color: #ff3333;
+            font-size: 2rem;
+        }
+
+        .edit-form {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ff3333;
+            box-shadow: 0 0 0 3px rgba(255, 51, 51, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .save-btn {
+            padding: 0.75rem 2rem;
+            background: #ff3333;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn:hover {
+            background: #ff4444;
+            transform: translateY(-2px);
+        }
+
+        .back-btn {
+            padding: 0.75rem 2rem;
+            background: #666;
+            color: white;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #777;
+            transform: translateY(-2px);
+        }
+
+        .coordinates-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="edit-container">
+        <div class="header-actions">
+            <h1>{{ restaurant.name }} Edit information</h1>
+        </div>
+
+        <form class="edit-form" id="editForm">
+            <div class="form-group">
+                <label for="name">Restaurant name</label>
+                <input type="text" id="name" name="name" value="{{ restaurant.name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" required>{{ restaurant.description }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" id="address" name="address" value="{{ restaurant.address }}" required>
+            </div>
+
+            <div class="coordinates-group">
+                <div class="form-group">
+                    <label for="latitude">Latitude</label>
+                    <input type="number" id="latitude" name="latitude" value="{{ restaurant.latitude }}" step="0.000001" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="longitude">Longitude</label>
+                    <input type="number" id="longitude" name="longitude" value="{{ restaurant.longitude }}" step="0.000001" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="image_path">Image path</label>
+                <input type="text" id="image_path" name="image_path" value="{{ restaurant.image_path }}">
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="save-btn">Save</button>
+                <a href="{{ url_for('admin.restaurant_stats') }}" class="back-btn">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            name: document.getElementById('name').value,
+            description: document.getElementById('description').value,
+            address: document.getElementById('address').value,
+            latitude: parseFloat(document.getElementById('latitude').value),
+            longitude: parseFloat(document.getElementById('longitude').value),
+            image_path: document.getElementById('image_path').value
+        };
+
+        try {
+            const response = await fetch('{{ url_for("admin.edit_restaurant") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                alert('Saved');
+                window.location.href = '{{ url_for("admin.restaurant_stats") }}';
+            } else {
+                alert('Error while saving');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error while saving');
+        }
+    });
+    </script>
+</body>
+</html>

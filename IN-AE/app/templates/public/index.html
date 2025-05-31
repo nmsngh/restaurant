@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant list</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(45deg, #ffffff, #f8f9fa);
+        }
+
+        .public-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .public-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .public-header h1 {
+            color: #ff3333;
+            font-size: 2rem;
+        }
+
+        .admin-link {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 51, 51, 0.1);
+            color: #ff3333;
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .admin-link:hover {
+            background: rgba(255, 51, 51, 0.2);
+        }
+
+        .restaurant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .restaurant-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .restaurant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .restaurant-image {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .restaurant-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.3s ease;
+        }
+
+        .restaurant-info {
+            padding: 1.5rem;
+        }
+
+        .restaurant-info h2 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+        }
+
+        .star {
+            color: #ff3333;
+            font-size: 1.2rem;
+            margin-right: 2px;
+        }
+
+        .rating-number {
+            color: #666;
+            margin-left: 0.5rem;
+        }
+
+        .restaurant-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-top: 0.5rem;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            margin: 5vh auto;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            overflow: auto;
+        }
+
+        .close-button {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            color: #ff3333;
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        .modal-header {
+            padding: 2rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .current-status {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: rgba(255, 51, 51, 0.05);
+            border-radius: 0.5rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .status-item i {
+            color: #ff3333;
+        }
+
+        .restaurant-map {
+            height: 300px;
+            margin: 1.5rem 0;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+
+        .reviews-section {
+            margin-top: 1.5rem;
+        }
+
+        .reviews-section h3 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .review-item {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .public-container {
+                padding: 1rem;
+            }
+
+            .public-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 2.5vh auto;
+            }
+
+            .current-status {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="public-container">
+        <header class="public-header">
+            <h1>Restaurant list</h1>
+            <a href="{{ url_for('auth.login') }}" class="admin-link">Admin login</a>
+        </header>
+
+        <div class="restaurant-grid">
+            {% for restaurant in restaurants %}
+            <div class="restaurant-card" onclick="openModal('{{ restaurant.id }}')">
+                <div class="restaurant-image">
+                    <img src="{{ url_for('static', filename=restaurant.image_path) }}" 
+                         alt="{{ restaurant.name }}"
+                         onerror="this.src='{{ url_for('static', filename='images/1.jpg') }}'">
+                </div>
+                <div class="restaurant-info">
+                    <h2>{{ restaurant.name }}</h2>
+                    <div class="rating">
+                        {% for _ in range(restaurant.rating|int) %}
+                            <span class="star">★</span>
+                        {% endfor %}
+                        {% if (restaurant.rating % 1) >= 0.5 %}
+                            <span class="star">★</span>
+                        {% endif %}
+                        {% for _ in range((5 - restaurant.rating)|round|int) %}
+                            <span class="star" style="color: #ccc;">☆</span>
+                        {% endfor %}
+                        <span class="rating-number">{{ "%.1f"|format(restaurant.rating) }}</span>
+                    </div>
+                    <p class="restaurant-description">{{ restaurant.description[:100] }}{% if restaurant.description|length > 100 %}...{% endif %}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 모달 -->
+    <div id="restaurantModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="modalRestaurantName"></h2>
+                <div id="modalRating" class="rating"></div>
+            </div>
+            <div class="modal-body">
+                <div class="modal-image">
+                    <img id="modalImage" alt="Restaurant Image">
+                </div>
+                <div class="restaurant-details">
+                    <div class="current-status">
+                        <div class="status-item">
+                            <i class="fas fa-thermometer-half"></i>
+                            <span>Temperature: </span>
+                            <span id="modalTemperature"></span>°C
+                        </div>
+                        <div class="status-item">
+                            <i class="fas fa-tint"></i>
+                            <span>Humidity: </span>
+                            <span id="modalHumidity"></span>%
+                        </div>
+                        <div class="status-item">
+                            <i class="fas fa-volume-up"></i>
+                            <span>Noise: </span>
+                            <span id="modalNoise"></span>dB
+                        </div>
+                    </div>
+                    <p id="modalDescription" class="description"></p>
+                    <div id="map" class="restaurant-map"></div>
+                    <div class="reviews-section">
+                        <h3>Review</h3>
+                        <div id="modalReviews" class="reviews-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        let map = null;
+
+        async function openModal(restaurantId) {
+            try {
+                const response = await fetch(`/api/restaurants/${restaurantId}`);
+                const restaurant = await response.json();
+                
+                document.getElementById('modalRestaurantName').textContent = restaurant.name;
+                document.getElementById('modalImage').src = `/static/${restaurant.image_path}`;
+                document.getElementById('modalTemperature').textContent = restaurant.temperature;
+                document.getElementById('modalHumidity').textContent = restaurant.humidity;
+                document.getElementById('modalNoise').textContent = restaurant.noise_level;
+                document.getElementById('modalDescription').textContent = restaurant.description;
+                
+                // 별점 표시
+                const ratingDiv = document.getElementById('modalRating');
+                ratingDiv.innerHTML = '';
+                for (let i = 0; i < Math.floor(restaurant.rating); i++) {
+                    ratingDiv.innerHTML += '<span class="star">★</span>';
+                }
+                if (restaurant.rating % 1 >= 0.5) {
+                    ratingDiv.innerHTML += '<span class="star">★</span>';
+                }
+                for (let i = Math.ceil(restaurant.rating); i < 5; i++) {
+                    ratingDiv.innerHTML += '<span class="star" style="color: #ccc;">☆</span>';
+                }
+                ratingDiv.innerHTML += `<span class="rating-number">${restaurant.rating.toFixed(1)}</span>`;
+                
+                // 리뷰 표시
+                const reviewsDiv = document.getElementById('modalReviews');
+                reviewsDiv.innerHTML = '';
+                if (restaurant.short_reviews) {
+                    restaurant.short_reviews.forEach(review => {
+                        const reviewElement = document.createElement('div');
+                        reviewElement.className = 'review-item';
+                        reviewElement.textContent = review;
+                        reviewsDiv.appendChild(reviewElement);
+                    });
+                }
+                
+                // 모달 표시
+                document.getElementById('restaurantModal').style.display = 'block';
+                document.body.style.overflow = 'hidden';
+                
+                // 지도 표시
+                if (map) {
+                    map.remove();
+                }
+                
+                setTimeout(() => {
+                    map = L.map('map').setView([restaurant.latitude, restaurant.longitude], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+                    
+                    L.marker([restaurant.latitude, restaurant.longitude])
+                     .bindPopup(restaurant.name)
+                     .addTo(map);
+                     
+                    map.invalidateSize();
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Loading fail');
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('restaurantModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            if (map) {
+                map.remove();
+                map = null;
+            }
+        }
+
+        // 모달 외부 클릭시 닫기
+        window.onclick = function(event) {
+            const modal = document.getElementById('restaurantModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // 지도 크기 조정을 위한 이벤트 리스너
+        window.addEventListener('resize', () => {
+            if (map) {
+                map.invalidateSize();
+            }
+        });
+    </script>
+</body>
+</html>

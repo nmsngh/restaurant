@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ restaurant.name }} - statistics</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(45deg, #ffffff, #f8f9fa);
+            padding: 2rem;
+        }
+
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-actions h1 {
+            color: #ff3333;
+            font-size: 2rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-buttons a {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .edit-btn {
+            background: #ff3333;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #ff4444;
+            transform: translateY(-2px);
+        }
+
+        .logout-btn {
+            background: #666;
+            color: white;
+        }
+
+        .logout-btn:hover {
+            background: #777;
+            transform: translateY(-2px);
+        }
+
+        .current-values {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .value-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .value-card h3 {
+            color: #666;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .value-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff3333;
+        }                
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-card h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .chart-container {
+            height: 150px;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .control-panel {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+        }
+        
+        .control-panel h2 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .sliders-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .slider-label {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .slider-value {
+            background: #f0f0f0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.9rem;
+            color: #666;
+            min-width: 3rem;
+            text-align: center;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+            appearance: none;
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff3333;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-preview-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .color-preview {
+            width: 100%;
+            height: 150px;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .color-values {
+            text-align: center;
+            font-family: monospace;
+            color: #666;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .sliders-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .color-preview {
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stats-container">
+        <div class="header-actions">
+            <h1>{{ restaurant.name }} Statistics</h1>
+            <div class="action-buttons">
+                <a href="{{ url_for('admin.edit_restaurant') }}" class="edit-btn">
+                    <i class="fas fa-edit"></i> Edit information
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> logout
+                </a>
+            </div>
+        </div>        
+        <div class="current-values">
+            <div class="value-card">
+                <h3>Current temperature</h3>
+                <div class="value" id="currentTemp">--°C</div>
+            </div>
+            <div class="value-card">
+                <h3>Current humid</h3>
+                <div class="value" id="currentHumid">--%</div>
+            </div>
+            <div class="value-card">
+                <h3>Current noise</h3>
+                <div class="value" id="currentNoise">--dB</div>
+            </div>
+        </div>        
+        <div class="chart-grid">
+            <div class="chart-card">
+                <h3>Temperature change</h3>
+                <div class="chart-container">
+                    <canvas id="temperatureChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="chart-grid">
+            <div class="chart-card">
+                <h3>Humid change</h3>
+                <div class="chart-container">
+                    <canvas id="humidityChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="chart-grid">
+            <div class="chart-card">
+                <h3>Noise change</h3>
+                <div class="chart-container">
+                    <canvas id="noiseChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="control-panel">
+            <h2>Control light</h2>
+            <div class="sliders-container">
+                <div class="slider-group">
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <span class="slider-label">Hue</span>
+                            <span class="slider-value" id="hueValue">{{ light_settings.hue }}°</span>
+                        </div>
+                        <input type="range" id="hueSlider" class="slider" min="0" max="360" value="180">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <span class="slider-label">Saturation</span>
+                            <span class="slider-value" id="saturationValue">{{ light_settings.saturation }}%</span>
+                        </div>
+                        <input type="range" id="saturationSlider" class="slider" min="0" max="100" value="50">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <span class="slider-label">Lightness</span>
+                            <span class="slider-value" id="lightnessValue">{{ light_settings.lightness }}%</span>
+                        </div>
+                        <input type="range" id="lightnessSlider" class="slider" min="0" max="100" value="50">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <span class="slider-label">Lux</span>
+                            <span class="slider-value" id="luxValue">{{ light_settings.lux }}</span>
+                        </div>
+                        <input type="range" id="luxSlider" class="slider" min="0" max="1000" value="500">
+                    </div>
+                </div>
+                <div class="color-preview-section">
+                    <div class="color-preview" id="colorPreview"></div>
+                    <div class="color-values" id="colorValues">hsl(180, 50%, 50%)</div>
+                </div>
+            </div>
+        </div>
+        <style>
+        .chart-grid {
+            margin-bottom: 2rem;
+        }
+        .chart-card {
+            width: 100%;
+        }
+        </style>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
+</body>
+</html>

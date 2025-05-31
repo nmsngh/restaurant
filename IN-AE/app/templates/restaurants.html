@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}맛집 리스트{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/restaurant.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="background">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
+
+<div class="container">
+    <header class="header">
+        <h1>맛집 리스트</h1>
+        <a href="{{ url_for('auth.logout') }}" class="logout-btn">로그아웃</a>
+    </header>
+    
+    <div class="restaurant-grid">
+        {% for restaurant in restaurants %}
+        <div class="restaurant-card" onclick="openModal({{ restaurant.id }})">
+            <!-- 기존 카드 내용 -->
+            <div class="restaurant-image">
+                <img src="{{ url_for('static', filename=restaurant.image_path) }}" 
+                     alt="{{ restaurant.name }}"
+                     onerror="this.src='{{ url_for('static', filename='images/1.jpg') }}'">
+            </div>
+            <div class="restaurant-info">
+                <h2>{{ restaurant.name }}</h2>
+                <div class="rating" data-rating="{{ restaurant.rating }}">
+                    {% for _ in range(restaurant.rating|int) %}
+                        <span class="star filled">★</span>
+                    {% endfor %}
+                    {% if (restaurant.rating % 1) >= 0.5 %}
+                        <span class="star half">★</span>
+                    {% endif %}
+                    {% for _ in range((5 - restaurant.rating)|round|int) %}
+                        <span class="star empty">☆</span>
+                    {% endfor %}
+                    <span class="rating-number">{{ "%.1f"|format(restaurant.rating) }}</span>
+                </div>
+                <p>{{ restaurant.description }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 모달 -->
+<div id="restaurantModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">&times;</span>
+        <div class="modal-header">
+            <h2 id="modalRestaurantName"></h2>
+            <div id="modalRating" class="rating"></div>
+        </div>
+        <div class="modal-body">
+            <div class="modal-image">
+                <img id="modalImage" alt="Restaurant Image">
+            </div>
+            <div class="restaurant-details">
+                <div class="current-status">
+                    <div class="status-item">
+                        <i class="fas fa-thermometer-half"></i>
+                        <span>온도: </span>
+                        <span id="modalTemperature"></span>°C
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-tint"></i>
+                        <span>습도: </span>
+                        <span id="modalHumidity"></span>%
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-volume-up"></i>
+                        <span>소음: </span>
+                        <span id="modalNoise"></span>dB
+                    </div>
+                </div>
+                <p id="modalDescription" class="description"></p>
+                <div id="map" class="restaurant-map"></div>
+                <div class="reviews-section">
+                    <h3>한줄평</h3>
+                    <div id="modalReviews" class="reviews-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/restaurant.js') }}"></script>
+{% endblock %}
